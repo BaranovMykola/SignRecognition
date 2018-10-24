@@ -8,18 +8,24 @@ class TF_Model:
     def __init__(self, classes_count):
         self.classes_count = classes_count
 
-        self.model = tf.estimator.Estimator(self.model_fn, model_dir='./Tensorboard1/')
+        self.model = tf.estimator.Estimator(self.model_fn, model_dir='./Tensorboard/')
         
 
 
     def neural_net(self, x):
         x = x
-        layer_1 = tf.layers.dense(x, 64*64*3)
-        layer_2 = tf.layers.dense(layer_1, 64*64)
-        layer_3 = tf.layers.dense(layer_2, 64*32)
-        layer_4 = tf.layers.dense(layer_3, 64*8)
-        layer_5 = tf.layers.dense(layer_4, 64)
-        out_layer = tf.layers.dense(layer_5, self.classes_count)
+        cnn1 = tf.layers.conv2d(inputs=x, filters=8, activation=tf.nn.relu, kernel_size=(3,3))
+        mp1 = tf.layers.max_pooling2d(inputs=cnn1, pool_size=(2,2), strides=2)
+        cnn2 = tf.layers.conv2d(inputs=mp1, filters=8, activation=tf.nn.relu, kernel_size=(3,3))
+        mp2 = tf.layers.max_pooling2d(inputs=cnn2, pool_size=(2, 2), strides=2)
+        cnn3 = tf.layers.conv2d(inputs=mp2, filters=8, activation=tf.nn.relu, kernel_size=(3,3))
+        mp3 = tf.layers.max_pooling2d(inputs=cnn3, pool_size=(2, 2), strides=2)
+
+        features = tf.reshape(mp3, ([-1,6*6*8]))
+
+        layer_1 = tf.layers.dense(features, 6*6*8)
+        layer_3 = tf.layers.dense(layer_1, 64)
+        out_layer = tf.layers.dense(layer_3, self.classes_count)
         return out_layer
 
 
@@ -69,12 +75,12 @@ class TF_Model:
     def train(self, input_fn):
         tf.logging.set_verbosity(tf.logging.INFO)
         # self.model.model_dir = "./"
-        self.model.train(input_fn, steps=5)
+        self.model.train(input_fn, steps=100)
 
 
 
     def test(self, input_fn):
-        res = self.model.evaluate(input_fn)
+        res = self.model.evaluate(input_fn, steps=100)
 
         print("Testing Accuracy:", res['accuracy'], res)
         
