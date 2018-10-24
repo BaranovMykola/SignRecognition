@@ -3,27 +3,38 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
+mnist = tf.keras.datasets.mnist
+
+(x_train, y_train),(x_test, y_test) = mnist.load_data()
+x_train, x_test = x_train / 255.0, x_test / 255.0
+
 
 class TF_Model:
     def __init__(self, classes_count):
         self.classes_count = classes_count
 
-        self.model = tf.estimator.Estimator(self.model_fn, model_dir='./Tensorboard/')
-        
+        self.model = tf.estimator.Estimator(self.model_fn, model_dir='./Simple_NN/')
+
 
 
     def neural_net(self, x):
         x = x
         cnn1 = tf.layers.conv2d(inputs=x, filters=8, activation=tf.nn.relu, kernel_size=(3,3))
-        mp1 = tf.layers.max_pooling2d(inputs=cnn1, pool_size=(2,2), strides=2)
-        cnn2 = tf.layers.conv2d(inputs=mp1, filters=8, activation=tf.nn.relu, kernel_size=(3,3))
-        mp2 = tf.layers.max_pooling2d(inputs=cnn2, pool_size=(2, 2), strides=2)
-        cnn3 = tf.layers.conv2d(inputs=mp2, filters=8, activation=tf.nn.relu, kernel_size=(3,3))
-        mp3 = tf.layers.max_pooling2d(inputs=cnn3, pool_size=(2, 2), strides=2)
+        cnn2 = tf.layers.conv2d(inputs=cnn1, filters=8, activation=tf.nn.relu, kernel_size=(3,3))
+        cnn3 = tf.layers.conv2d(inputs=cnn2, filters=8, activation=tf.nn.relu, kernel_size=(3,3))
 
-        features = tf.reshape(mp3, ([-1,6*6*8]))
+        mp1 = tf.layers.max_pooling2d(inputs=cnn3, pool_size=(2,2), strides=2)
 
-        layer_1 = tf.layers.dense(features, 6*6*8)
+        cnn3 = tf.layers.conv2d(inputs=mp1, filters=16, activation=tf.nn.relu, kernel_size=(3, 3))
+        cnn4 = tf.layers.conv2d(inputs=cnn3, filters=16, activation=tf.nn.relu, kernel_size=(3, 3))
+        cnn5 = tf.layers.conv2d(inputs=cnn4, filters=16, activation=tf.nn.relu, kernel_size=(3, 3))
+
+        mp2 = tf.layers.max_pooling2d(inputs=cnn5, pool_size=(2, 2), strides=2)
+
+        s = 11*11*16
+        features = tf.reshape(mp2, ([-1,s]))
+
+        layer_1 = tf.layers.dense(features, s)
         layer_3 = tf.layers.dense(layer_1, 64)
         out_layer = tf.layers.dense(layer_3, self.classes_count)
         return out_layer
@@ -75,12 +86,12 @@ class TF_Model:
     def train(self, input_fn):
         tf.logging.set_verbosity(tf.logging.INFO)
         # self.model.model_dir = "./"
-        self.model.train(input_fn, steps=100)
+        self.model.train(input_fn, steps=None)
 
 
 
     def test(self, input_fn):
-        res = self.model.evaluate(input_fn, steps=100)
+        res = self.model.evaluate(input_fn, steps=None)
 
         print("Testing Accuracy:", res['accuracy'], res)
         
@@ -89,6 +100,9 @@ class TF_Model:
         input = tf.estimator.inputs.numpy_input_fn(np_tensor, shuffle=False)
         predict = self.model.predict(input)
         predictes = list([x for x in predict])
-        return predict
+        # print("11111")
+        # for i in predict:
+        #     print("iii--->>", i)
+        return predictes
 
     # def my_input_fn(self):
